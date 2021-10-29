@@ -276,15 +276,8 @@ class Equation(object):
         self.left: Formula = left
         self.right: Formula = right
 
-
-if __name__ == '__main__':
-    a = Div(2,-3)
-    x = Var("x")
-    y = Var("x")
-    print(a)
-    b = Z(3)
-    c = Z(-3)
-    print(x==y)
+    def eval(self,var_name):
+        pass
 
 
 
