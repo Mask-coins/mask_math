@@ -6,28 +6,28 @@ import math
 
 class Formula(object):
     def __neg__(self):
-        return Neg(self).eval()
+        return Neg(self)
 
     def __add__(self, other: Union[Formula, int]):
-        return Add(self, other).eval()
+        return Add(self, other)
 
     def __iadd__(self, other: Union[Formula, int]):
-        return Add(self, other).eval()
+        return Add(self, other)
 
     def __sub__(self, other: Union[Formula, int]):
-        return Sub(self, other).eval()
+        return Sub(self, other)
 
     def __isub__(self, other: Union[Formula, int]):
-        return Sub(self, other).eval()
+        return Sub(self, other)
 
     def __mul__(self, other: Union[Formula, int]):
-        return Mul(self, other).eval()
+        return Mul(self, other)
 
     def __truediv__(self, other: Formula):
-        return Div(self, other).eval()
+        return Div(self, other)
 
     def __pow__(self, other: Formula):
-        return Pow(self, other).eval()
+        return Pow(self, other)
 
     @abstractmethod
     def __eq__(self, other: Formula):
@@ -57,12 +57,14 @@ class MonoOperator(Formula, metaclass=ABCMeta):
 
 
 class Neg(MonoOperator):
-    name = "-"
+    name = "~"
 
     def __init__(self, value):
         super().__init__(value)
 
     def eval(self):
+        if isinstance(self.value, Z):
+            return Z(-self.value.value)
         return Mul(Z(-1),self.value).eval()
 
 
@@ -178,13 +180,7 @@ class Div(BinOperator):
     name = "/"
 
     def __init__(self, left, right):
-        numerator = left
-        denominator = right
-        if (isinstance(denominator,int) and denominator < 0
-        ) or (isinstance(denominator,Z) and denominator.value < 0):
-            numerator = -numerator
-            denominator = -denominator
-        super().__init__(numerator, denominator)
+        super().__init__(left, right)
 
     def eval(self):
         #print(type(self.left),self.left,type(self.right),self.right)
@@ -199,7 +195,11 @@ class Div(BinOperator):
         if isinstance(self.left,Div) and isinstance(self.right,Div):
             numerator = Mul(self.left.left,self.right.right).eval()
             denominator = Mul(self.left.right,self.right.left).eval()
-        return Div(numerator, denominator).reduction()
+        if (isinstance(denominator,int) and denominator < 0
+        ) or (isinstance(denominator,Z) and denominator.value < 0):
+            numerator = -numerator
+            denominator = -denominator
+        return Div(numerator.eval(), denominator.eval()).reduction()
 
     def reduction(self):
         if isinstance(self.left,Z) and isinstance(self.right,Z):
@@ -281,6 +281,11 @@ class Equation(object):
 
 
 
+if __name__ == "__main__":
+    a = Div(2,-3)
+    print(a)
+    a = a.eval()
+    print(a)
 
 
 
