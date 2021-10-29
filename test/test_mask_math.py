@@ -11,6 +11,13 @@ def test_div_z_z():
     assert a.right == Z(3)
 
 
+def test_Neg():
+    a = Div(2,3)
+    a = ---a
+    a = a.eval()
+    assert a == Div(-2,3)
+
+
 def test_var_x_x():
     x = Var("x")
     y = Var("x")

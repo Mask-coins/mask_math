@@ -23,15 +23,21 @@ pip install git+https://github.com/Mask-coins/mask_math
 
 整数を定義
 ```bash
+from mask_math import formula
+
 a = Z(4)
 ```
 
 変数・文字を定義
 ```bash
+from mask_math import formula
+
 x = Var("x")
 ```
 分数を定義（a,bともに同じ結果になります）
 ```bash
+from mask_math import formula
+
 a = Div(1,2)
 b = Z(1)/Z(2)
 ```

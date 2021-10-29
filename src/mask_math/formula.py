@@ -65,6 +65,8 @@ class Neg(MonoOperator):
     def eval(self):
         if isinstance(self.value, Z):
             return Z(-self.value.value)
+        if isinstance(self.value, Neg):
+            return self.value.value.eval()
         return Mul(Z(-1),self.value).eval()
 
 
@@ -129,7 +131,6 @@ class Sub(BinOperator):
         super().__init__(left, right)
 
     def eval(self):
-        #print(type(self.left),self.left,type(self.right),self.right)
         if isinstance(self.left,Z) and isinstance(self.right,Z):
             return Z(self.left.value-self.right.value)
         if isinstance(self.left,Div) and isinstance(self.right,Z):
@@ -183,7 +184,6 @@ class Div(BinOperator):
         super().__init__(left, right)
 
     def eval(self):
-        #print(type(self.left),self.left,type(self.right),self.right)
         numerator = self.left
         denominator = self.right
         if isinstance(self.left,Div) and isinstance(self.right,Z):
@@ -256,6 +256,9 @@ class Z(Number):
         else:
             return False
 
+    def eval(self):
+        return self
+
 
 class Var(Number):
     def __init__(self,value):
@@ -270,6 +273,9 @@ class Var(Number):
         else:
             return False
 
+    def eval(self):
+        return self
+
 
 class Equation(object):
     def __init__(self, left: Formula, right: Formula):
@@ -282,7 +288,8 @@ class Equation(object):
 
 
 if __name__ == "__main__":
-    a = Div(2,-3)
+    a = Div(2,3)
+    a = ---a
     print(a)
     a = a.eval()
     print(a)
