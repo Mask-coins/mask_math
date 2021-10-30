@@ -38,11 +38,11 @@ x = Var("x")
 ```bash
 from mask_math import formula
 
-a = Div(1,2)
-b = Z(1)/Z(2)
+a = Q(1,-2)
+a = a.eval()
+b = Z(-1)/Z(2)
+b = b.eval()
 ```
 
-# Note
 
-注意点などがあれば書く
 
