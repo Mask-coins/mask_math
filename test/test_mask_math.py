@@ -1,5 +1,5 @@
 from src.mask_math.formula import *
-
+from src.mask_math.abstract_number import RealNumber
 
 def test_div_z_z():
     a = Q(2,-3)
@@ -11,7 +11,7 @@ def test_div_z_z():
 
 
 def test_Neg():
-    a = Div(2,3)
+    a = Q(2,3)
     a = ---a
     a = a.eval()
     assert a == Q(-2,3)
@@ -35,16 +35,25 @@ def test_var_xy():
     z = x*y
     z = z.eval()
     assert z==Mul(Var("x"),Var("y"))
+    assert z==Mul(Var("y"),Var("x"))
     z = Var("z")
     a = (x*y/z).eval()
-    assert a==Div(Mul(Var("x"),Var("y")),Var("z"))
+    b = Div(Mul(Var("x"),Var("y")),Var("z"))
+    assert a==b
     v = Var("v")
     a = (x/y)*(z/v)
     assert a==Mul(Div(Var("x"),Var("y")),Div(Var("z"),Var("v")))
+    assert a==Mul(Div(Var("z"),Var("v")),Div(Var("x"),Var("y")))
     a = a.eval()
     assert a==Div(Mul(Var("x"),Var("v")),Mul(Var("y"),Var("z")))
+    assert a==Div(Mul(Var("v"),Var("x")),Mul(Var("z"),Var("y")))
 
-
+def test_var_add():
+    x = Var("x")
+    a = x+x
+    assert a==Add(Var("x"),Var("x"))
+    a = a.eval()
+    assert a==Add(Z(2),Var("x"))
 
 
 

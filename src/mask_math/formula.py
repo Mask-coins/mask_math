@@ -1,108 +1,25 @@
 from __future__ import annotations
-from abc import ABCMeta, abstractmethod
+from abc import ABCMeta, abstractmethod, ABC
 from typing import Union
 import math
-
-
-class Law(object):
-    '''
-    各種法則の親クラス
-    '''
-    pass
-
-
-class AssociativeLaw(Law):
-    '''
-    結合法則
-    '''
-    pass
-
-
-class AssociativeLawAdd(AssociativeLaw):
-    pass
-
-
-class AssociativeLawMul(AssociativeLaw):
-    pass
-
-
-class IdentityElementExistance(Law):
-    '''
-    単位元の存在
-    '''
-    pass
-
-
-class IdentityElementExistanceAdd(IdentityElementExistance):
-    pass
-
-
-class IdentityElementExistanceMul(IdentityElementExistance):
-    pass
-
-
-class InverseElementExistance(Law):
-    '''
-    逆元の存在
-    '''
-    pass
-
-
-class InverseElementExistanceAdd(InverseElementExistance):
-    pass
-
-
-class InverseElementExistanceMul(InverseElementExistance):
-    pass
-
-
-class CommutativeLaw(Law):
-    '''
-    交換法則
-    '''
-    @staticmethod
-    def eq(left,right):
-        return (left==left and right==right) or (left==right and right==left)
-
-
-class CommutativeLawAdd(Law):
-    pass
-
-
-class CommutativeLawMul(Law):
-    pass
-
-
-class GroupAdd(
-    AssociativeLawAdd,
-    IdentityElementExistanceAdd,
-    InverseElementExistanceAdd):
-    pass
-
-
-class GroupMul(
-    AssociativeLawMul,
-    IdentityElementExistanceMul,
-    InverseElementExistanceMul):
-    pass
-
-
-class AbelianGroupAdd(GroupAdd,CommutativeLawAdd):
-    pass
-
-
-class AbelianGroupMul(GroupMul,CommutativeLawMul):
-    pass
-
-
-class DistributiveLaw(Law):
-    '''
-    分配法則
-    '''
-    pass
+from src.mask_math import abstract_law
+from src.mask_math import abstract_number
 
 
 class Formula(object):
+    def __init__(self):
+        self._type = abstract_number.Number
+        self.number_type_reset()
+
+    def number_type(self):
+        return self._type
+
+    def number_type_reset(self):
+        self._type = abstract_number.Number
+
+    def number_type_set(self, t: type):
+        self._type = t
+
     def __neg__(self):
         return Neg(self)
 
@@ -128,6 +45,10 @@ class Formula(object):
         return Pow(self, other)
 
     @abstractmethod
+    def eval(self):
+        return self
+
+    @abstractmethod
     def __eq__(self, other: Formula):
         pass
 
@@ -139,13 +60,15 @@ class MonoOperator(Formula, metaclass=ABCMeta):
         self.value: Union[Formula, int] = value
         if isinstance(value, int):
             self.value = Z(value)
+        super().__init__()
+        self.number_type_set(self.value.number_type())
 
     @abstractmethod
     def eval(self):
         pass
 
     def __eq__(self, other):
-        if type(self)==type(other):
+        if isinstance(other, type(self)):
             return self.value.__eq__(other.value)
         else:
             return False
@@ -171,32 +94,38 @@ class Neg(MonoOperator):
         return Mul(Z(-1),value).eval()
 
 
-class BinOperator(Formula, metaclass=ABCMeta):
+class BinOperator(Formula, abstract_law.AbstractBinOperator, metaclass=ABCMeta):
     name = ""
 
     def __init__(self, left: Union[Formula, int], right: Union[Formula, int]):
-        self.left: Union[Formula, int] = left
-        self.right: Union[Formula, int] = right
+        l: Union[Formula, int] = left
+        r: Union[Formula, int] = right
         if isinstance(left, int):
-            self.left = Z(left)
+            l = Z(left)
         if isinstance(right, int):
-            self.right = Z(right)
+            r = Z(right)
+        self.left = l
+        self.right = r
+        super().__init__()
+        c = abstract_number.supset_eq(l.number_type(),r.number_type(),set(),set())
+        self.number_type_set(c)
+        #if issubclass(l.number_type(), r.number_type()):
+        #    self.number_type_set(r.number_type())
+        #if issubclass(r.number_type(), l.number_type()):
+        #    self.number_type_set(r.number_type())
 
     @abstractmethod
     def eval(self):
         pass
 
     def __eq__(self, other):
-        if  isinstance(other,type(self)):
-            return self.left.__eq__(other.left) and self.right.__eq__(other.right)
-        else:
-            return False
+        return self.number_type().eq(self, other)
 
     def __str__(self):
         return "(" + str(self.left) + self.name + str(self.right) +")"
 
 
-class Add(BinOperator):
+class Add(BinOperator, abstract_law.AbstractAdd):
     name = "+"
 
     def __init__(self, left, right):
@@ -205,14 +134,26 @@ class Add(BinOperator):
     def eval(self):
         left: Formula = self.left.eval()
         right: Formula = self.right.eval()
-        numerator = None
-        denominator = None
+        # 3*x + 4*x のようなパターン
+        if issubclass(self.number_type(), abstract_number.CommutativeRing):
+            a = left
+            b =  right
+            if isinstance(self.left, abstract_number.Variable):
+                a = Z(1)*left
+            if isinstance(self.right, abstract_number.Variable):
+                b = Z(1)*left
+            if self.number_type().var_add_check(a+b):
+                return self.number_type().var_add(a+b)
+        # 両方とも整数表記のパターン
         if isinstance(left,Z) and isinstance(right,Z):
             return Z(left.value + right.value).eval()
+        # 両方とも単純な分数もしくは整数のパターン
         if isinstance(left,(Z,Q)) and isinstance(right,(Z,Q)):
             left: Q = left.Q()
             right: Q = right.Q()
             return Q(left.numerator * right.denominator + left.denominator * right.numerator, left.denominator * right.denominator).eval()
+        numerator = None
+        denominator = None
         if isinstance(left,Q):
             numerator: Formula = (Z(left.denominator)*right + Z(left.numerator)).eval()
             denominator: Z = Z(left.denominator).eval()
@@ -232,13 +173,6 @@ class Add(BinOperator):
             return Div(numerator,denominator).eval()
         return left+right
 
-    def __eq__(self, other):
-        if not isinstance(other,type(self)):
-            return False
-        if not(isinstance(self.left,CommutativeLawAdd) and isinstance(self.right,CommutativeLawAdd)):
-            return self.left.__eq__(other.left) and self.right.__eq__(other.right)
-        return CommutativeLaw.eq(self.left,self.right)
-
 
 class Sub(BinOperator):
     name = "-"
@@ -252,7 +186,7 @@ class Sub(BinOperator):
         return (left+(-right).eval()).eval()
 
 
-class Mul(BinOperator):
+class Mul(BinOperator, abstract_law.AbstractMul):
     name = "*"
 
     def __init__(self, left, right):
@@ -286,13 +220,6 @@ class Mul(BinOperator):
             denominator: Formula = right.left.eval()
             return (numerator/denominator).eval()
         return left * right
-
-    def __eq__(self, other):
-        if not isinstance(other,type(self)):
-            return False
-        if not(isinstance(self.left,CommutativeLawMul) and isinstance(self.right,CommutativeLawMul)):
-            return self.left.__eq__(other.left) and self.right.__eq__(other.right)
-        return CommutativeLaw.eq(self.left,self.right)
 
 
 class Div(BinOperator):
@@ -351,31 +278,46 @@ class Pow(BinOperator):
         return Pow(self.left, self.right)
 
 
-class Number(Formula, metaclass=ABCMeta):
-    @abstractmethod
-    def __str__(self):
-        pass
+class LineOperator(Formula):
+    def __init__(self):
+        super().__init__()
+        self.values: list[Formula] = []
 
+    @abstractmethod
     def eval(self):
-        return self
+        if len(self.values) == 0:
+            return None
+        if len(self.values) == 1:
+            return self.values.pop()
+        x = self.values.pop()
+        y = self.values.pop()
+        while y:
+            x += y
+            y = self.values.pop()
 
+    def __eq__(self, other):
+        return self.number_type().eq(self, other)
 
-class RealNumber(Number, CommutativeLawAdd, CommutativeLawMul):
-    '''
-    実数について扱う。
-    整数・有理数・無理数・変数のサブクラスを持つ
-    '''
-    @abstractmethod
     def __str__(self):
-        pass
+        return ""
+
+    def push(self,value:Formula):
+        self.values.append(value)
 
 
-class R(RealNumber):
+
+
+class R(Formula):
     '''
     原則として無理数を扱うが、事実上のfloat
     '''
     def __init__(self, value: float):
+        super().__init__()
         self.value: float = value
+        self.number_type_reset()
+
+    def number_type_reset(self):
+        self._type = abstract_number.RealNumber
 
     @abstractmethod
     def __str__(self):
@@ -385,10 +327,16 @@ class R(RealNumber):
         return self
 
 
-class Q(RealNumber):
+
+
+class Q(Formula, abstract_number.RationalNumber):
     def __init__(self, numerator: int, denominator: int):
         self.numerator: int = numerator
         self.denominator: int = denominator
+        super().__init__()
+
+    def number_type_reset(self):
+        self._type = abstract_number.RationalNumber
 
     def __str__(self):
         return "(" + str(self.numerator) + "/" + str(self.denominator) +")"
@@ -422,9 +370,13 @@ class Q(RealNumber):
         return Q(self.denominator,self.numerator)
 
 
-class Z(RealNumber):
+class Z(Formula):
     def __init__(self, value: int):
         self.value: int = value
+        super().__init__()
+
+    def number_type_reset(self):
+        self._type = abstract_number.Integer
 
     def __str__(self):
         return str(self.value)
@@ -438,18 +390,28 @@ class Z(RealNumber):
     def Q(self):
         return Q(self.value,1)
 
+    def CZ(self):
+        return CZ(self.value,0)
+
     def cast_float(self):
         return R(float(self.value))
 
+    def supset_type(self):
+        return (Q, CZ)
 
-class CZ(Number):
-    def __init__(self, real: Union[int,Z], imag: Union[int,Z]):
+
+class CZ(Formula):
+    def __init__(self, real: Union[int, Z], imag: Union[int, Z]):
+        super().__init__()
         self.real: Z = real
         self.imag: Z = imag
         if isinstance(real, int):
             self.real = Z(real)
         if isinstance(real, int):
             self.imag = Z(imag)
+
+    def number_type_reset(self):
+        self._type = abstract_number.CommutativeRing
 
     def __str__(self):
         return str(complex(self.real.value,self.imag.value))
@@ -468,9 +430,13 @@ class CZ(Number):
     def conjugate(self):
         return CZ(self.real,(-self.imag).eval())
 
+    def supset_type(self):
+        return (C,)
 
-class C(Number):
+
+class C(Formula):
     def __init__(self, real: Union[int, float, Z, R], imag: Union[int, float, Z, R]):
+        super().__init__()
         self.real: Z = real
         self.imag: Z = imag
         if isinstance(real, float):
@@ -482,6 +448,9 @@ class C(Number):
         if isinstance(imag, int):
             self.imag = Z(imag)
 
+    def number_type_reset(self):
+        self._type = abstract_number.ComplexNumber
+
     def __str__(self):
         pass
 
@@ -491,11 +460,17 @@ class C(Number):
         return self
 
 
-
-
-class Var(RealNumber):
-    def __init__(self,value):
+class Var(Formula, abstract_number.Variable):
+    def __init__(self, value, value_type=abstract_number.RealNumber):
         self.value: int = value
+        self.value_type = value_type
+        super().__init__()
+
+    def number_type_reset(self):
+        self._type = self.value_type
+
+    def eval(self):
+        return self
 
     def __str__(self):
         return str(self.value)
@@ -518,12 +493,10 @@ class Equation(object):
 
 if __name__ == "__main__":
     x = Var("x")
-    y = Var("y")
-    z = Var("z")
-    v = Var("v")
-    a = (x/y)*(z/v)
-    a = a.eval()
+    a = x + x
     print(a)
+    print(a.eval())
+    print((Z(1)+Z(1)).eval())
 
 
 
