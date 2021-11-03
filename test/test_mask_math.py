@@ -1,13 +1,59 @@
 from src.mask_math.formula import *
 from src.mask_math.abstract_number import RealNumber
 
-def test_div_z_z():
-    a = Q(2,-3)
-    assert a.numerator == 2
-    assert a.denominator == -3
+def test_z():
+    a = Z(3)
+    b = Z(-5)
+    c = (a+b).eval()
+    assert c == Z(-2)
+    c = (a-b).eval()
+    assert c == Z(8)
+    c = (a*b).eval()
+    assert c == Z(-15)
+    c = (a/b).eval()
+    assert c == Q(-3,5)
+
+
+def test_q():
+    a = Q(3,1)
     a = a.eval()
-    assert a.numerator == -2
-    assert a.denominator == 3
+    assert a == Z(3)
+    a = Q(3,4)
+    b = Q(5,-6)
+    c = (a+b).eval()
+    assert c == Q(-1,12)
+    c = (a-b).eval()
+    assert c == Q(19,12)
+    c = (a*b).eval()
+    assert c == Q(-5,8)
+    c = (a/b).eval()
+    assert c == Q(-9,10)
+
+
+def test_z_q():
+    a = Z(2)
+    b = Q(3,4)
+    c = (a+b).eval()
+    assert c == Q(11,4)
+    c = (a-b).eval()
+    assert c == Q(5,4)
+    c = (a*b).eval()
+    assert c == Q(3,2)
+    c = (a/b).eval()
+    assert c == Q(8,3)
+
+
+def test_q_z():
+    a = Q(3,-4)
+    b = Z(2)
+    c = (a+b).eval()
+    assert c == Q(5,4)
+    c = (a-b).eval()
+    assert c == Q(-11,4)
+    c = (a*b).eval()
+    assert c == Q(-3,2)
+    c = (a/b).eval()
+    assert c == Q(-3,8)
 
 
 def test_Neg():
@@ -26,6 +72,7 @@ def test_var_xx():
     y = Var("x")
     b = x==y
     assert b==True
+
 
 def test_var_xy():
     x = Var("x")
@@ -47,6 +94,7 @@ def test_var_xy():
     a = a.eval()
     assert a==Div(Mul(Var("x"),Var("v")),Mul(Var("y"),Var("z")))
     assert a==Div(Mul(Var("v"),Var("x")),Mul(Var("z"),Var("y")))
+
 
 def test_var_add():
     x = Var("x")

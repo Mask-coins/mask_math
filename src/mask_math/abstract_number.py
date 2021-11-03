@@ -24,16 +24,24 @@ class Ring(Number):
     '''
 
     class Zero(IdentityElement):
+        """
+        零元とは、乗法に対して吸収元であり、加法に対して単位元である
+        """
         @classmethod
         def eval(cls, op: AbstractAdd):
-            if not isinstance(op, AbstractAdd):
-                return op
-            if isinstance(op.left,cls) and isinstance(op.right,cls):
-                return cls()
-            if isinstance(op.left,cls):
-                return op.right
-            if isinstance(op.right,cls):
-                return op.left
+            # 加法に対して単位元
+            if isinstance(op, AbstractAdd):
+                if isinstance(op.left,cls) and isinstance(op.right,cls):
+                    return cls()
+                if isinstance(op.left,cls):
+                    return op.right
+                if isinstance(op.right,cls):
+                    return op.left
+            # 乗法に対して吸収元
+            if isinstance(op, AbstractMul):
+                if isinstance(op.left,cls) or isinstance(op.right,cls):
+                    return cls()
+            return op
 
     class One(IdentityElement):
         @classmethod
@@ -67,16 +75,14 @@ class Ring(Number):
         return Monoid
 
     @classmethod
-    def one(cls):
-        return None
-
-    @classmethod
-    def zero(cls):
-        return None
-
-    @classmethod
     def supset_type(cls):
         return (Number,)
+
+    def is_zero(self):
+        pass
+
+    def is_one(self):
+        pass
 
 
 class CommutativeRing(Ring, CommutativeLaw):
@@ -117,6 +123,9 @@ class CommutativeField(CommutativeRing):
     @classmethod
     def supset_type(cls):
         return CommutativeRing,
+
+    def mul_inv(self):
+        pass
 
 
 class ComplexNumber(CommutativeField):
