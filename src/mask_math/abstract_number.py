@@ -78,11 +78,48 @@ class Ring(Number):
     def supset_type(cls):
         return (Number,)
 
-    def is_zero(self):
+    @classmethod
+    def is_zero(cls,x):
+        return False
+
+    @classmethod
+    def is_one(cls,x):
+        return False
+
+    @classmethod
+    def zero(cls):
         pass
 
-    def is_one(self):
+    @classmethod
+    def one(cls):
         pass
+
+    @classmethod
+    def zero_eval(cls, op: Union[AbstractAdd,AbstractMul]):
+        # 加法に対して単位元
+        if isinstance(op, AbstractAdd):
+            if cls.is_zero(op.left) and cls.is_zero(op.right):
+                return cls.zero()
+            if cls.is_zero(op.left):
+                return op.right
+            if cls.is_zero(op.right):
+                return op.left
+        # 乗法に対して吸収元
+        if isinstance(op, AbstractMul):
+            if cls.is_zero(op.left) or cls.is_zero(op.right):
+                return cls.zero()
+        return op
+
+    @classmethod
+    def one_eval(cls, op: AbstractMul):
+        if not isinstance(op, AbstractMul):
+            return op
+        if cls.is_one(op.left) and cls.is_one(op.right):
+            return cls.one()
+        if cls.is_one(op.left):
+            return op.right
+        if cls.is_one(op.right):
+            return op.left
 
 
 class CommutativeRing(Ring, CommutativeLaw):

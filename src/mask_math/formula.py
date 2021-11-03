@@ -132,11 +132,14 @@ class Add(BinOperator, abstract_law.AbstractAdd):
         super().__init__(left, right)
 
     def eval(self):
+        op = self
+        # 整数演算
+        op = Z.add(op)
+        op = Q.add(op)
+        if isinstance(op, (Z,Q)):
+            return op
         left: Formula = self.left.eval()
         right: Formula = self.right.eval()
-        # 整数の場合
-        if isinstance(left,Z) and isinstance(right,Z):
-            return Z.add(left, right)
         # 両方とも分数・整数
         if isinstance(left,(Z,Q)) and isinstance(right,(Z,Q)):
             return Q.add(left, right)
@@ -191,14 +194,13 @@ class Mul(BinOperator, abstract_law.AbstractMul):
         super().__init__(left, right)
 
     def eval(self):
-        left: Formula = self.left.eval()
-        right: Formula = self.right.eval()
-        # 整数の場合
-        if isinstance(left,Z) and isinstance(right,Z):
-            return Z.mul(left,right)
-        # 有理数の場合
-        if isinstance(left,(Z,Q)) and isinstance(right,(Z,Q)):
-            return Q.mul(left,right)
+        op = self
+        op = Z.mul(op)
+        op = Q.mul(op)
+        if isinstance(op, (Z,Q)):
+            return op
+        left: Formula = op.left.eval()
+        right: Formula = op.right.eval()
         if isinstance(right,Q):
             temp_left: Formula = Mul(left,Z(right.denominator)).eval()
             temp_right: Z = Z(right.numerator).eval()
@@ -227,14 +229,13 @@ class Div(BinOperator):
         super().__init__(left, right)
 
     def eval(self):
-        left: Formula = self.left.eval()
-        right: Formula = self.right.eval()
-        # 整数の場合
-        if isinstance(left,Z) and isinstance(right,Z):
-            return Z.div(left,right)
-        # 有理数の場合
-        if isinstance(left,(Z,Q)) and isinstance(right,(Z,Q)):
-            return Q.div(left,right)
+        op = self
+        op = Z.div(op)
+        op = Q.div(op)
+        if isinstance(op, (Z,Q)):
+            return op
+        left: Formula = op.left.eval()
+        right: Formula = op.right.eval()
         if isinstance(right, (Q,Div)):
             return (left * right.swap()).eval()
         if isinstance(right,Z) and right < Z(0):
@@ -358,11 +359,11 @@ class Q(Formula, abstract_number.RationalNumber):
             return Z(numerator)
         return Q(numerator,denominator)
 
+    def R(self):
+        return R(self.numerator/self.denominator)
+
     def Q(self):
         return self
-
-    def cast_float(self):
-        return R(self.numerator/self.denominator)
 
     def swap(self):
         return Q(self.denominator,self.numerator)
@@ -372,55 +373,49 @@ class Q(Formula, abstract_number.RationalNumber):
         return isinstance(left, (Z,Q)) and isinstance(right, (Z,Q))
 
     @classmethod
-    def add(cls, left: Q, right: Q):
-        x: Q = left
-        y: Q = right
-        if isinstance(x,Z):
-            x = left.Q()
-        if isinstance(y,Z):
-            y = right.Q()
-        numerator = x.numerator * y.denominator + x.denominator * y.numerator
-        denominator = x.denominator * y.denominator
-        return Q(numerator,denominator).eval()
+    def add(cls, op: abstract_law.AbstractAdd):
+        if isinstance(op, abstract_law.AbstractAdd):
+            if isinstance(op.left, (Z,Q)) and isinstance(op.right, (Z,Q)):
+                x: Q = op.left
+                y: Q = op.right
+                if isinstance(x,Z):
+                    x = op.left.Q()
+                if isinstance(y,Z):
+                    y = op.right.Q()
+                numerator = x.numerator * y.denominator + x.denominator * y.numerator
+                denominator = x.denominator * y.denominator
+                return Q(numerator,denominator).eval()
+        return op
 
     @classmethod
-    def sub(cls, left: Q, right: Q):
-        x: Q = left
-        y: Q = right
-        if isinstance(x,Z):
-            x = left.Q()
-        if isinstance(y,Z):
-            y = right.Q()
-        numerator = x.numerator * y.denominator - x.denominator * y.numerator
-        denominator = x.denominator * y.denominator
-        return Q(numerator,denominator).eval()
+    def mul(cls, op: abstract_law.AbstractMul):
+        if isinstance(op, abstract_law.AbstractMul):
+            if isinstance(op.left, (Z,Q)) and isinstance(op.right, (Z,Q)):
+                x: Q = op.left
+                y: Q = op.right
+                if isinstance(x,Z):
+                    x = op.left.Q()
+                if isinstance(y,Z):
+                    y = op.right.Q()
+                numerator = x.numerator * y.numerator
+                denominator = x.denominator * y.denominator
+                return Q(numerator,denominator).eval()
+        return op
 
     @classmethod
-    def mul(cls, left: Q, right: Q):
-        x: Q = left
-        y: Q = right
-        if isinstance(x,Z):
-            x = left.Q()
-        if isinstance(y,Z):
-            y = right.Q()
-        numerator = x.numerator * y.numerator
-        denominator = x.denominator * y.denominator
-        return Q(numerator,denominator).eval()
-
-    @classmethod
-    def div(cls, left: Q, right: Q):
-        x: Q = left
-        y: Q = right
-        if isinstance(x,Z):
-            x = left.Q()
-        if isinstance(y,Z):
-            y = right.Q()
-        numerator = x.numerator * y.denominator
-        denominator = x.denominator * y.numerator
-        return Q(numerator,denominator).eval()
-
-
-
+    def div(cls, op: Div):
+        if isinstance(op, Div):
+            if isinstance(op.left, (Z,Q)) and isinstance(op.right, (Z,Q)):
+                x: Q = op.left
+                y: Q = op.right
+                if isinstance(x,Z):
+                    x = op.left.Q()
+                if isinstance(y,Z):
+                    y = op.right.Q()
+                numerator = x.numerator * y.denominator
+                denominator = x.denominator * y.numerator
+                return Q(numerator,denominator).eval()
+        return op
 
 
 class Z(Formula):
@@ -440,14 +435,14 @@ class Z(Formula):
         else:
             return False
 
+    def R(self):
+        return R(float(self.value))
+
     def Q(self):
         return Q(self.value,1)
 
     def CZ(self):
         return CZ(self.value,0)
-
-    def cast_float(self):
-        return R(float(self.value))
 
     def supset_type(self):
         return (Q, CZ)
@@ -463,23 +458,25 @@ class Z(Formula):
         return cls==type(left) and cls==type(right)
 
     @classmethod
-    def add(cls, left: Z, right: Z):
-        return Z(left.value + right.value)
+    def add(cls, op: abstract_law.AbstractAdd):
+        if isinstance(op, abstract_law.AbstractAdd):
+            if isinstance(op.left,Z) and isinstance(op.right,Z):
+                return Z(op.left.value + op.right.value)
+        return op
 
     @classmethod
-    def sub(cls, left: Z, right: Z):
-        return Z(left.value - right.value)
+    def mul(cls, op: abstract_law.AbstractMul):
+        if isinstance(op, abstract_law.AbstractMul):
+            if isinstance(op.left,Z) and isinstance(op.right,Z):
+                return Z(op.left.value * op.right.value)
+        return op
 
     @classmethod
-    def mul(cls, left: Z, right: Z):
-        return Z(left.value * right.value)
-
-    @classmethod
-    def div(cls, left: Z, right: Z):
-        return Q(left.value,right.value).eval()
-
-
-
+    def div(cls, op: Div):
+        if isinstance(op, Div):
+            if isinstance(op.left,Z) and isinstance(op.right,Z):
+                return Q(op.left.value,op.right.value).eval()
+        return op
 
 
 class CZ(Formula):
