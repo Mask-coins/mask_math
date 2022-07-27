@@ -15,6 +15,27 @@ def supset_eq(x: Number, y: Number, self_set: set, other_set: set) -> Union[Numb
     return r.pop()
 
 
+class Zero(Law):
+    value = None
+    @classmethod
+    def eval(cls, op: AbstractAdd):
+        # 加法に対して単位元
+        if isinstance(op, AbstractAdd):
+            if op.left == cls.value and op.right == cls.value:
+                return cls.value
+            if op.left == cls.value:
+                return op.right
+            if op.right == cls.value:
+                return op.left
+        # 乗法に対して吸収元
+        if isinstance(op, AbstractMul):
+            if op.left == cls.value or op.right == cls.value:
+                return cls.value
+        return op
+
+
+
+
 class Ring(Number):
     '''
     環
@@ -80,22 +101,24 @@ class Ring(Number):
 
     @classmethod
     def is_zero(cls,x):
-        return False
+        return isinstance(x,type(cls.zero()))
 
     @classmethod
     def is_one(cls,x):
-        return False
+        return isinstance(x,type(cls.one()))
 
     @classmethod
     def zero(cls):
-        pass
+        return cls.Zero()
 
     @classmethod
     def one(cls):
-        pass
+        return cls.One()
 
     @classmethod
     def zero_eval(cls, op: Union[AbstractAdd,AbstractMul]):
+        if not issubclass(op.number_type(),cls):
+            return op
         # 加法に対して単位元
         if isinstance(op, AbstractAdd):
             if cls.is_zero(op.left) and cls.is_zero(op.right):
@@ -112,6 +135,8 @@ class Ring(Number):
 
     @classmethod
     def one_eval(cls, op: AbstractMul):
+        if not issubclass(op.number_type(),cls):
+            return op
         if not isinstance(op, AbstractMul):
             return op
         if cls.is_one(op.left) and cls.is_one(op.right):
@@ -215,12 +240,29 @@ class GaussianInteger(CommutativeRing):
 
 
 class ModuleOverARing(Number):
+    '''
+    環上の加群
+    '''
     def __init__(self):
         super().__init__()
-        self._ring = Ring
+        self._scalar = Ring
 
-    def ring_type(self):
-        return self._ring
+    def scalar_type(self):
+        return self._scalar
+
+
+class Matrix(Number):
+    '''
+    行列
+    '''
+    def __init__(self):
+        super().__init__()
+
+
+
+
+
+
 
 
 

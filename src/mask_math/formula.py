@@ -136,13 +136,10 @@ class Add(BinOperator, abstract_law.AbstractAdd):
         # 整数演算
         op = Z.add(op)
         op = Q.add(op)
-        if isinstance(op, (Z,Q)):
+        if isinstance(op, (Z,Q,Var)):
             return op
         left: Formula = self.left.eval()
         right: Formula = self.right.eval()
-        # 両方とも分数・整数
-        if isinstance(left,(Z,Q)) and isinstance(right,(Z,Q)):
-            return Q.add(left, right)
         # 3*x + 4*x のようなパターン
         if issubclass(self.number_type(), abstract_number.CommutativeRing):
             a = left
@@ -423,6 +420,9 @@ class Z(Formula):
         self.value: int = value
         super().__init__()
 
+    class Zero(abstract_number.Zero):
+        pass
+
     def number_type_reset(self):
         self._type = abstract_number.Integer
 
@@ -458,7 +458,43 @@ class Z(Formula):
         return cls==type(left) and cls==type(right)
 
     @classmethod
-    def add(cls, op: abstract_law.AbstractAdd):
+    def zero(cls):
+        return Z(0)
+
+    @classmethod
+    def one(cls):
+        return Z(1)
+
+    @classmethod
+    def zero_eval(cls, op: Union[Add,Mul]):
+        if op.left == Z(0):
+            op.left = op.number_type().zero()
+        if op.right == Z(0):
+            op.right = op.number_type().zero()
+        op = op.number_type().zero_eval(op)
+        if isinstance(op,op.number_type().Zero):
+            op = Z(0)
+        return op
+
+    @classmethod
+    def one_eval(cls, op: Add):
+        if op.left == Z(0):
+            op.left == op.number_type().one()
+        if op.right == Z(0):
+            op.right == op.number_type().one()
+        op = op.number_type().zero_eval(op)
+        if isinstance(op,op.number_type().ONE):
+            op = Z(1)
+        return op
+
+    @classmethod
+    def add(cls, op: Add):
+        op = cls.zero_eval(op)
+        op = op.number_type().one_eval(op)
+        if type(op) == op.number_type().zero():
+            op = cls.zero()
+        if type(op) == op.number_type().one():
+            op = cls.one()
         if isinstance(op, abstract_law.AbstractAdd):
             if isinstance(op.left,Z) and isinstance(op.right,Z):
                 return Z(op.left.value + op.right.value)

@@ -161,6 +161,14 @@ class Monoid(Law):
     def eq(cls, left: AbstractBinOperator,right: AbstractBinOperator):
         return (left.left == right.left and left.right == right.right)
 
+    @classmethod
+    def has_identity_element(cls):
+        return True
+
+    @classmethod
+    def has_inverse(cls):
+        return False
+
 
 class CommutativeMonoid(Law):
     @classmethod
@@ -169,7 +177,14 @@ class CommutativeMonoid(Law):
 
 
 class Group(Law):
-    pass
+    @classmethod
+    def has_inverse(cls):
+        return True
+
+    @classmethod
+    def has_identity_element(cls):
+        return True
+
 
 
 class AbelianGroup(Group):
