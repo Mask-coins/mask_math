@@ -101,6 +101,14 @@ class Mandelbrot(object):
         plot_real_number_field(f, file_path, cmap)
 
 
+class Julia(Mandelbrot):
+    def __init__(self,draw_range=100, draw_height=None, draw_width=None, display_range=2, center=complex(0,0), power:int|float=2, c=complex(0.1,0.2)):
+        super().__init__(draw_range, draw_height, draw_width, display_range, center, power)
+        self._z = self.c
+        self.c = (self.c * 0) + c
+
+
+
 def plot_real_number_field(surf, file_path, cmap:str= "copper"):
     surf1 = (1/np.max(surf))*surf
     cm = plt.get_cmap(cmap)
