@@ -1,5 +1,5 @@
 from src.mask_math.formula import *
-from src.mask_math.abstract_number import Integer, RealNumber
+from src.mask_math.abstract_number import Integer
 
 def test_z():
     a = Z(3)
