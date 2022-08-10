@@ -1,5 +1,5 @@
 from src.mask_math.formula import *
-from src.mask_math.abstract_number import RealNumber
+from src.mask_math.abstract_number import Integer, RealNumber
 
 def test_z():
     a = Z(3)
@@ -12,6 +12,11 @@ def test_z():
     assert c == Z(-15)
     c = (a/b).eval()
     assert c == Q(-3,5)
+    a = Z(0)
+    x = Var("x", Integer)
+    c = (a+x).eval()
+    print(c)
+    assert c == Var("x", Integer)
 
 
 def test_q():
