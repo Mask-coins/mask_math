@@ -1,6 +1,6 @@
-numpy~=1.21.2
-setuptools~=56.0.0
+numpy
+setuptools
 
-opencv-python~=4.6.0.66
-Pillow~=8.3.1
-matplotlib~=3.4.2
+opencv-python
+Pillow
+matplotlib
