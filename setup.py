@@ -9,10 +9,11 @@ from setuptools import find_packages
 def _requires_from_file(filename):
     return open(filename).read().splitlines()
 
+print(find_packages("src"))
 
 setup(
     name="mask_math",
-    version="0.1.2",
+    version="0.1.3",
     description="私がよく使いまわす数学・アルゴリズムコードを集めたもの",
     author="Mask_coins",
     url="https://github.com/Mask-coins/mask_math",
