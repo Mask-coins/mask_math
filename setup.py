@@ -12,13 +12,13 @@ def _requires_from_file(filename):
 
 setup(
     name="mask_math",
-    version="0.1.0",
+    version="0.1.1",
     description="私がよく使いまわす数学・アルゴリズムコードを集めたもの",
     author="Mask_coins",
     url="https://github.com/Mask-coins/mask_math",
     packages=find_packages("src"),
     package_dir={"": "src"},
-    py_modules=[splitext(basename(path))[0] for path in glob('src/*.py')],
+    #py_modules=[splitext(basename(path))[0] for path in glob('src/*.py')],
     include_package_data=True,
     zip_safe=False,
     install_requires=_requires_from_file('requirements.txt'),
