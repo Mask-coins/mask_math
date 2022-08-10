@@ -1,3 +1,5 @@
 __all__ = [
-    'mask_math','formula',"fractal"
+    'mask_math',
+    'formula',
+    "fractal"
 ]
