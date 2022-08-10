@@ -62,7 +62,7 @@ class Mandelbrot(object):
 
     @property
     def z(self):
-        return self.z
+        return self._z
 
     @property
     def abs_z_cleaned(self):
@@ -108,9 +108,10 @@ class Julia(Mandelbrot):
         self.c = (self.c * 0) + c
 
 
-
 def plot_real_number_field(surf, file_path, cmap:str= "copper"):
-    surf1 = (1/np.max(surf))*surf
+    s_min = np.min(surf)
+    s_max = np.max(surf)
+    surf1 = (1/(s_max-s_min))*(-s_min+surf)
     cm = plt.get_cmap(cmap)
     colored_image = cm(surf1)
     Image.fromarray((colored_image[:, :, :3] * 255).astype(np.uint8)).save(file_path)
